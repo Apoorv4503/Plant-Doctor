@@ -1,2 +1,6 @@
 
 groq
+gradio
+requests
+python-dotenv
+Pillow
