@@ -2,5 +2,5 @@ venv/
 __pycache__/
 *.pyc
 temp_leaf.jpg
-.env          ← This line protects your key!
+.env          
 *.key

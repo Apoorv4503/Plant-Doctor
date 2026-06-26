@@ -1,11 +1,12 @@
 import gradio as gr
 from model import identify_disease
 from llm import get_treatment_advice
+from weather import get_weather
 
-def analyze_plant(image, question):
+def analyze_plant(image, question, city):
     """
-    Takes image + optional question
-    Returns disease + AI treatment advice
+    Takes image + question + city
+    Returns disease + weather-aware AI advice
     """
     # Save uploaded image
     image_path = "temp_leaf.jpg"
@@ -14,31 +15,50 @@ def analyze_plant(image, question):
     # Get disease from vision model
     disease, confidence = identify_disease(image_path)
     
-    # Get smart advice from Groq
-    advice = get_treatment_advice(disease, confidence)
+    # Get weather data
+    weather = get_weather(city if city else "Noida")
     
-    # Format diagnosis result
+    # Get smart advice from Groq with weather context
+    advice = get_treatment_advice(disease, confidence, question, weather)
+    
+    # Format diagnosis
     diagnosis = f"""
 🌿 Disease Detected: {disease}
 📊 Confidence: {confidence}%
     """
     
-    return diagnosis, advice
+    # Format weather
+    weather_display = f"""
+🌡️ Temperature: {weather['temperature']}°C
+💧 Humidity: {weather['humidity']}%
+🌤️ Condition: {weather['condition']}
+💨 Wind Speed: {weather['wind_speed']} m/s
+    """
+    
+    return diagnosis, weather_display, advice
 
-# Build updated Gradio UI
+# Build Phase 3 UI
 app = gr.Interface(
     fn=analyze_plant,
     inputs=[
-        gr.Image(type="pil", label="Upload Leaf Image"),
-        gr.Textbox(label="Ask a question (optional)", 
-                   placeholder="e.g. Why are my leaves turning yellow?")
+        gr.Image(type="pil", label="📸 Upload Leaf Image"),
+        gr.Textbox(
+            label="💬 Ask a question (optional)",
+            placeholder="e.g. Why are my leaves turning yellow?"
+        ),
+        gr.Textbox(
+            label="📍 Your City",
+            placeholder="e.g. Noida, Delhi, Mumbai, London",
+            value="Noida"
+        )
     ],
     outputs=[
-        gr.Textbox(label="Diagnosis Result"),
-        gr.Textbox(label="AI Treatment Advice")
+        gr.Textbox(label="🌿 Diagnosis Result"),
+        gr.Textbox(label="🌦️ Current Weather"),
+        gr.Textbox(label="🤖 AI Treatment Advice")
     ],
-    title="🌿 Plant Doctor - Phase 2",
-    description="Upload a leaf image and get AI-powered disease diagnosis + treatment advice"
+    title="🌿 Multimodal Plant Doctor",
+    description="Upload a leaf image, ask a question, and get weather-aware AI plant disease diagnosis!"
 )
 
 if __name__ == "__main__":
